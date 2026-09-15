@@ -1,0 +1,62 @@
+{% extends "exam/base.html" %}
+
+{% block body_class %}welcome-page{% endblock %}
+
+{% block content %}
+<section class="welcome-page-content">
+
+    <div class="card assessment-main-box">
+
+        <div class="assessment-welcome">
+            <h1>Welcome to your online assessment.</h1>
+
+            <p>
+                Please read the instructions carefully before starting the exam.
+            </p>
+        </div>
+
+        <div class="assessment-divider"></div>
+
+        <div class="assessment-instructions">
+            <p class="step">STEP 1 OF 4</p>
+
+            <h2>Exam Instructions</h2>
+
+            <ul class="clean-instruction-list">
+                <li>
+                    The examination contains
+                    <strong>40 multiple-choice questions.</strong>
+                </li>
+
+                <li>
+                    You have <strong>40 minutes</strong> to complete the examination.
+                </li>
+
+                <li>
+                    Your laptop camera must remain active during the examination.
+                </li>
+
+                <li>
+                    Select one answer for each question. You can move using
+                    Previous, Next, or the question palette.
+                </li>
+
+                <li>
+                    Do not refresh or close this tab once the examination has started.
+                </li>
+
+                <li>
+                    Your examination will be submitted automatically when the timer
+                    reaches zero.
+                </li>
+            </ul>
+
+            <a class="button start-exam-button" href="{% url 'register' %}">
+                Continue to Registration →
+            </a>
+        </div>
+
+    </div>
+
+</section>
+{% endblock %}

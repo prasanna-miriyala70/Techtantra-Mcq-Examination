@@ -1,0 +1,331 @@
+{% extends "exam/base.html" %}
+
+{% block body_class %}exam-page{% endblock %}
+
+{% block exam_header_status %}
+<div class="exam-header-status">
+
+    <div class="header-candidate">
+        <small>CANDIDATE</small>
+        <strong>{{ attempt.candidate.name }}</strong>
+        <span id="answered-count">0 of 40 answered</span>
+    </div>
+
+    <div class="header-timer">
+        <small>TIME REMAINING</small>
+        <strong id="timer">40:00</strong>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block content %}
+<form method="post" action="{% url 'submit_exam' %}" id="exam-form">
+    {% csrf_token %}
+
+    <div class="exam-security-warning">
+        <strong>Important:</strong>
+        Do not switch to another tab, window, or application during the examination.
+        Leaving this examination screen will terminate your exam.
+    </div>
+
+    <div class="exam-layout">
+
+        <section>
+            <div class="passage" id="reading-passage" hidden>
+                <strong>Passage for Questions 21–24:</strong>
+                Effective leadership is not simply about giving instructions.
+                A good leader communicates clearly, listens to team members,
+                and takes responsibility for decisions.
+            </div>
+
+            {% for question in questions %}
+            <article
+                class="question-card {% if forloop.first %}current{% endif %}"
+                id="question-{{ forloop.counter }}"
+            >
+                <div class="question-label">
+                    <span>Question {{ question.order }}</span>
+                    <span>Choose one answer</span>
+                </div>
+
+                <p class="question-text">{{ question.text }}</p>
+
+                <label class="option">
+                    <input type="radio" name="question_{{ question.id }}" value="0">
+                    <span>A. {{ question.option_a }}</span>
+                </label>
+
+                <label class="option">
+                    <input type="radio" name="question_{{ question.id }}" value="1">
+                    <span>B. {{ question.option_b }}</span>
+                </label>
+
+                <label class="option">
+                    <input type="radio" name="question_{{ question.id }}" value="2">
+                    <span>C. {{ question.option_c }}</span>
+                </label>
+
+                <label class="option">
+                    <input type="radio" name="question_{{ question.id }}" value="3">
+                    <span>D. {{ question.option_d }}</span>
+                </label>
+            </article>
+            {% endfor %}
+
+            <div class="actions">
+                <button type="button" class="button secondary" id="previous">
+                    ← Previous
+                </button>
+
+                <button type="button" class="button secondary" id="next">
+                    Next →
+                </button>
+
+                <button class="button submit main-submit" type="submit">
+                    Submit Exam
+                </button>
+            </div>
+        </section>
+
+        <aside class="palette">
+
+            <div class="camera-panel">
+                <video id="camera" autoplay muted playsinline hidden></video>
+                <span id="camera-placeholder">Camera preview</span>
+            </div>
+
+            <p id="camera-message" class="camera-message">
+                Requesting camera access…
+            </p>
+
+            <h2>Question Palette</h2>
+
+            <div class="numbers">
+                {% for question in questions %}
+                <button
+                    type="button"
+                    class="number"
+                    data-index="{{ forloop.counter0 }}"
+                >
+                    {{ question.order }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <p class="palette-legend">
+                <i class="legend done"></i> Answered
+                <i class="legend"></i> Not answered
+            </p>
+
+            <button class="button submit palette-submit" type="submit">
+                Submit Exam
+            </button>
+
+        </aside>
+
+    </div>
+</form>
+
+<div id="exam-terminated-overlay" class="exam-terminated-overlay" hidden>
+    <div class="termination-message">
+        <div class="termination-icon">!</div>
+
+        <h1>Examination Terminated</h1>
+
+        <p>
+            You left the examination window. Your examination is being
+            submitted automatically.
+        </p>
+
+        <small>
+            Please wait. You will be redirected to the result page.
+        </small>
+    </div>
+</div>
+
+<script>
+/*
+ If browser Back tries to restore an old examination screen,
+ Django checks the submitted status and redirects to result.html.
+*/
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted) {
+        window.location.replace("{% url 'exam' %}");
+    }
+});
+
+
+const cards = [...document.querySelectorAll(".question-card")];
+const buttons = [...document.querySelectorAll(".number")];
+
+let current = 0;
+let examTerminated = false;
+let tabSwitchDetected = false;
+let timer;
+
+
+function showQuestion(index) {
+    current = Math.max(0, Math.min(index, cards.length - 1));
+
+    cards.forEach((card, cardIndex) => {
+        card.classList.toggle("current", cardIndex === current);
+    });
+
+    buttons.forEach((button, buttonIndex) => {
+        button.classList.toggle("selected", buttonIndex === current);
+    });
+
+    document.getElementById("reading-passage").hidden =
+        !(current >= 20 && current <= 23);
+
+    window.scrollTo({ top: 0 });
+}
+
+
+function updateProgress() {
+    const answered = document.querySelectorAll(
+        'input[type="radio"]:checked'
+    ).length;
+
+    document.getElementById("answered-count").textContent =
+        `${answered} of 40 answered`;
+
+    buttons.forEach((button, index) => {
+        const hasAnswer = cards[index].querySelector("input:checked");
+        button.classList.toggle("done", !!hasAnswer);
+    });
+
+    document.querySelectorAll(".option").forEach((option) => {
+        option.classList.toggle(
+            "selected",
+            option.querySelector("input").checked
+        );
+    });
+}
+
+
+/*
+ Shows the warning screen after a candidate returns from another tab/window.
+ The overlay stops all clicks. Selected answers are still submitted safely.
+*/
+function terminateExamForLeavingPage() {
+    if (examTerminated) {
+        return;
+    }
+
+    examTerminated = true;
+
+    clearInterval(timer);
+
+    document.getElementById("exam-terminated-overlay").hidden = false;
+
+    setTimeout(function () {
+        document.getElementById("exam-form").submit();
+    }, 3000);
+}
+
+
+/*
+ When the page becomes hidden, the candidate has moved away.
+ When they return, show the termination screen immediately.
+*/
+document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+        tabSwitchDetected = true;
+    }
+
+    if (!document.hidden && tabSwitchDetected) {
+        terminateExamForLeavingPage();
+    }
+});
+
+
+buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+        showQuestion(Number(button.dataset.index));
+    });
+});
+
+
+document.getElementById("previous").onclick = () => {
+    showQuestion(current - 1);
+};
+
+
+document.getElementById("next").onclick = () => {
+    showQuestion(current + 1);
+};
+
+
+document.querySelectorAll('input[type="radio"]').forEach((input) => {
+    input.addEventListener("change", updateProgress);
+});
+
+
+document.getElementById("exam-form").addEventListener("submit", (event) => {
+    const answered = document.querySelectorAll(
+        'input[type="radio"]:checked'
+    ).length;
+
+    if (
+        !examTerminated &&
+        answered < 40 &&
+        !confirm("Some questions are unanswered. Submit anyway?")
+    ) {
+        event.preventDefault();
+    }
+});
+
+
+const examEndTime = new Date(
+    "{{ attempt.expires_at|date:'c' }}"
+).getTime();
+
+
+function updateTimer() {
+    const seconds = Math.max(
+        0,
+        Math.floor((examEndTime - Date.now()) / 1000)
+    );
+
+    const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const remainingSeconds = String(seconds % 60).padStart(2, "0");
+
+    document.getElementById("timer").textContent =
+        `${minutes}:${remainingSeconds}`;
+
+    if (seconds <= 0 && !examTerminated) {
+        examTerminated = true;
+        clearInterval(timer);
+        document.getElementById("exam-form").submit();
+    }
+}
+
+
+timer = setInterval(updateTimer, 1000);
+updateTimer();
+
+
+navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: false
+})
+.then((stream) => {
+    document.getElementById("camera").srcObject = stream;
+    document.getElementById("camera").hidden = false;
+    document.getElementById("camera-placeholder").hidden = true;
+
+    const message = document.getElementById("camera-message");
+    message.textContent = "Camera is active.";
+    message.classList.add("active");
+})
+.catch(() => {
+    document.getElementById("camera-message").textContent =
+        "Camera permission is required for this examination.";
+});
+
+
+showQuestion(0);
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Tech Tantra Solution | MCQ Examination</title>
+
+    <link rel="stylesheet" href="{% static 'exam/style.css' %}">
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+    <header class="site-header">
+        <div class="header-inner">
+
+            <img
+                src="{% static 'exam/logo.png' %}"
+                alt="Tech Tantra Solution logo"
+                class="logo"
+            >
+
+            <div class="header-title">
+                <span class="header-kicker">ASSESSMENT PORTAL</span>
+                <span>Online MCQ Examination</span>
+            </div>
+
+            {% block exam_header_status %}{% endblock %}
+
+        </div>
+    </header>
+
+    <main class="page-shell">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <span>© Tech Tantra Solution</span>
+        <span>Secure Online Assessment Portal</span>
+    </footer>
+
+</body>
+</html>

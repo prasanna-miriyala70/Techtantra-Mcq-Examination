@@ -1,0 +1,72 @@
+{% extends "exam/base.html" %}
+
+{% block body_class %}result-page{% endblock %}
+
+{% block content %}
+<section class="reference-result-page">
+
+    <div class="reference-result-card">
+
+        <div class="result-brand">
+    <p>EXAMINATION RESULT</p>
+    </div>
+
+        <div class="result-heading">
+            <h1>Thank you, {{ attempt.candidate.name }}!</h1>
+
+            <p>
+                Your exam has been submitted successfully.
+            </p>
+        </div>
+
+        <div class="result-score-row">
+
+            <div class="result-stat correct-stat">
+                <strong>{{ attempt.score }}</strong>
+                <span>Correct Answers</span>
+            </div>
+
+            <div class="result-stat answered-stat">
+                <strong>{{ attempt.answered_count }}</strong>
+                <span>Questions Answered</span>
+            </div>
+
+            <div class="result-stat unanswered-stat">
+                <strong>{{ attempt.score }} / 40</strong>
+                <span>Final Score</span>
+            </div>
+
+        </div>
+
+        <p class="result-information">
+            40 questions · No negative marking
+        </p>
+
+        <div class="result-completed-message">
+            ✓ Your examination attempt has been recorded successfully.
+        </div>
+
+        <p class="close-window-message">
+            You may now safely close this window.
+        </p>
+
+    </div>
+
+</section>
+
+<script>
+/* Keep submitted candidates on the result page. */
+window.history.pushState(null, "", window.location.href);
+
+window.addEventListener("popstate", function () {
+    window.history.pushState(null, "", window.location.href);
+});
+
+/* Reload if the browser tries to restore an old cached page. */
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
+</script>
+{% endblock %}

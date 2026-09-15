@@ -1,0 +1,59 @@
+{% extends "exam/base.html" %}
+
+{% block body_class %}registration-page{% endblock %}
+
+{% block content %}
+<section class="registration-page-content">
+
+    <div class="card registration-main-box">
+
+        <div class="registration-heading">
+            <p class="step">STEP 2 OF 4</p>
+
+            <h1>Candidate Registration</h1>
+
+            <p>
+                Please enter your details before starting the examination.
+            </p>
+        </div>
+
+        <div class="registration-divider"></div>
+
+        <div class="candidate-details-section">
+            <h2>Candidate Details</h2>
+
+            <p class="candidate-details-note">
+                Your details are used only to identify your examination attempt.
+            </p>
+
+            <form method="post" class="registration-form">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="registration-field">
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+                        {{ field }}
+
+                        {% for error in field.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <p class="check-details-message">
+                    Please check your details before starting.
+                </p>
+
+                <button class="button start-examination-button" type="submit">
+                    Start Examination →
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</section>
+{% endblock %}
