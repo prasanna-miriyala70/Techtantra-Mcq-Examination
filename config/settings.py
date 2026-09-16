@@ -64,7 +64,10 @@ DATABASES = {"default": {
     "PASSWORD": os.environ.get("MYSQL_PASSWORD"),
     "HOST": os.environ.get("MYSQL_HOST", "127.0.0.1"),
     "PORT": os.environ.get("MYSQL_PORT", "3306"),
-    "OPTIONS": {"charset": "utf8mb4"},
+    "OPTIONS": {
+    "charset": "utf8mb4",
+    "ssl": {"ssl_mode": "REQUIRED"},
+},
 }}
 
 AUTH_PASSWORD_VALIDATORS = []
